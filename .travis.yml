@@ -1,0 +1,11 @@
+sudo: required
+
+services: docker
+
+before_install:
+ - docker-compose up --build -do
+
+script:
+ - docker-compose exec 'RAILS_ENV=test' web rails db:create
+ - docker-compose exec 'RAILS_ENV=test' web rails db:migrate
+ - docker-compose exec 'RAILS_ENV=test' web rails test

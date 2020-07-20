@@ -1,32 +1,21 @@
 sudo: required
+
 services: docker
+
 before_install:
-- docker-compose up --build -d
-- docker login -u "$HEROKU_USERNAME" -p "$HEROKU_API_KEY" registry.heroku.com
+ - docker-compose up --build -d
+ - docker login -u "$HEROKU_USERNAME" -p "$HEROKU_API_KEY" registry.heroku.com
+
 script:
-- docker-compose exec --env 'RAILS_ENV=test' web rails db:create
-- docker-compose exec --env 'RAILS_ENV=test' web rails db:migrate
-- docker-compose exec --env 'RAILS_ENV=test' web rails test
+ - docker-compose exec --env 'RAILS_ENV=test' web rails db:create
+ - docker-compose exec --env 'RAILS_ENV=test' web rails db:migrate
+ - docker-compose exec --env 'RAILS_ENV=test' web rails test
+
 deploy:
-- provider: s3
-  access_key_id: AKIAYNC2CJ6KDL4LZKVW
-  secret_access_key: &1
-    secure: g8SFfoESA51I5aVNoiIca8p0SAOQX6l/8k/s1RVQxLpalmrNmAUPZzLFteMnbqqblxCjfnGwgSOBP/+ezC34gNlm4vXZuLTlaaxjfWN28IoZizD4iMsyy6JZOJ9tKp7TtDxSXCxeqbho+JaWkaHQsPFct+7mssKrCkC35tVAux6NHKARCRNhZGaCw1fBmMnigwogI19LiaGcDm1nK7gBCtQqGQ/bS97dPmXvBOySGkq2YwRc02K40f4fNEcwakq+iFyk35bzhISECxMh5AVGuy8EsuKKm0mD72MOomv9+Y+e6lAdxzNAiOGz7l6/cb8Rvv1eBHFz5ZKt0L+4XDfhUskbPVJZFIzW1jwWfWwaQtNEAAmYrCrP76gtIdbBOLwcFAaQcOFQRychrakA3Ny4/nwuQjFcUOK2SHtn+VaNxTJ2XKQTCiVrcgylOiRedJtwBWvkBU0BxchEbamjYBLo7D94pjAQPYL2H860LjoBV4M8zzkd7S49iUcwTnAFgivzdYw1BxDFlEOHUEmxrnsW3y5WUxtJ2eAb2Yf056E5bcoi3f444j7g7Rlv+dUg+3SBzDwpNvuIVSe9+W4OG8xvBow2Y6f+986PBzTuF+7X789egxNSXF9CNhM7dNPF8lzY2DvY2medI0SQONYaPHeB6z4Aj1EMDC76Mbll0hZEXc4=
-  local_dir: dpl_cd_upload
-  skip_cleanup: true
-  on: &2
-    repo: Shuji3233/product-register
-  bucket: codepipeline-ap-northeast-1-172688285753
-- provider: codedeploy
-  access_key_id: AKIAYNC2CJ6KDL4LZKVW
-  secret_access_key: *1
-  bucket: codepipeline-ap-northeast-1-172688285753
-  key: ''
-  bundle_type: ''
-  application: product-register
-  deployment_group: travis-deploy
-  on: *2
-  skip_cleanup: 'true'
-before_deploy:
-- mkdir -p dpl_cd_upload
-- mv '' dpl_cd_upload/''
+ provider: script
+ script:
+  docker build -t registry.heroku.com/$HEROKU_APP_NAME/web -f Dockerfile.prod .;
+  docker push registry.heroku.com/$HEROKU_APP_NAME/web;
+  heroku run --app $HEROKU_APP_NAME rails db:migrate;
+ on:
+  branch: master
